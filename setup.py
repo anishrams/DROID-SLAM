@@ -4,6 +4,8 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 import os.path as osp
 ROOT = osp.dirname(osp.abspath(__file__))
 
+print("ROOT", ROOT)
+
 setup(
     name='droid_backends',
     ext_modules=[

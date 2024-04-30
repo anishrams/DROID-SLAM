@@ -12,6 +12,7 @@ import glob
 import time
 import yaml
 import argparse
+import json
 
 from droid import Droid
 
@@ -20,9 +21,10 @@ def image_stream(datapath, image_size=[384, 512], intrinsics_vec=[320.0, 320.0, 
 
     # read all png images in folder
     ht0, wd0 = [480, 640]
-    images_left = sorted(glob.glob(os.path.join(datapath, 'image_left/*.png')))
-    images_right = sorted(glob.glob(os.path.join(datapath, 'image_right/*.png')))
+    images_left = sorted(glob.glob(os.path.join(datapath, 'image_lcam_front/*.png')))
+    images_right = sorted(glob.glob(os.path.join(datapath, 'image_rcam_front/*.png')))
 
+    print("Datapath: ", datapath)
     data = []
     for t in range(len(images_left)):
         images = [ cv2.resize(cv2.imread(images_left[t]), (image_size[1], image_size[0])) ]
@@ -33,6 +35,8 @@ def image_stream(datapath, image_size=[384, 512], intrinsics_vec=[320.0, 320.0, 
         intrinsics = .8 * torch.as_tensor(intrinsics_vec)
 
         data.append((t, images, intrinsics))
+
+    print("Loaded {} images".format(len(data)))
 
     return data
 
@@ -89,7 +93,7 @@ if __name__ == '__main__':
 
         ### do evaluation ###
         evaluator = TartanAirEvaluator()
-        gt_file = os.path.join(scenedir, "pose_left.txt")
+        gt_file = os.path.join(scenedir, "pose_lcam_left.txt")
         traj_ref = np.loadtxt(gt_file, delimiter=' ')[:, [1, 2, 0, 4, 5, 3, 6]] # ned -> xyz
 
         # usually stereo should not be scale corrected, but we are comparing monocular and stereo here
@@ -98,6 +102,10 @@ if __name__ == '__main__':
         
         print(results)
         ate_list.append(results["ate_score"])
+
+        # append the result to the result.json file
+        with open('tartanair_result.json', 'w') as f:
+            json.dump(results, f)
 
     print("Results")
     print(ate_list)

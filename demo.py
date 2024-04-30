@@ -80,6 +80,7 @@ def save_reconstruction(droid, reconstruction_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--imagedir", type=str, help="path to image directory")
+    parser.add_argument("--resultdir", type=str, help="path to results directory")
     parser.add_argument("--calib", type=str, help="path to calibration file")
     parser.add_argument("--t0", default=0, type=int, help="starting frame")
     parser.add_argument("--stride", default=3, type=int, help="frame stride")
@@ -119,8 +120,12 @@ if __name__ == '__main__':
         if t < args.t0:
             continue
 
-        if not args.disable_vis:
-            show_image(image[0])
+        # if not args.disable_vis:
+        #     show_image(image[0])
+
+        # else:
+            # save images
+            # cv2.imwrite(args.resultdir + '/{}.png'.format(t), image[0].permute(1, 2, 0).cpu().numpy())
 
         if droid is None:
             args.image_size = [image.shape[2], image.shape[3]]
