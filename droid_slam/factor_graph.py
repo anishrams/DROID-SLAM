@@ -253,7 +253,9 @@ class FactorGraph:
         # alternate corr implementation
         t = self.video.counter.value
 
-        num, rig, ch, ht, wd = self.video.fmaps.shape
+        num, rig, ch, ht, wd = self.video.fmaps.shape        
+        if not hasattr(self, "corr_op"):
+            return
         corr_op = AltCorrBlock(self.video.fmaps.view(1, num*rig, ch, ht, wd))
 
         for step in range(steps):

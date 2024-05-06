@@ -15,14 +15,18 @@ import argparse
 import json
 
 from droid import Droid
+from scipy.spatial.transform import Rotation
+
+NUM_IMAGES = 1000
 
 def image_stream(datapath, image_size=[384, 512], intrinsics_vec=[320.0, 320.0, 320.0, 240.0], stereo=False):
     """ image generator """
 
     # read all png images in folder
     ht0, wd0 = [480, 640]
-    images_left = sorted(glob.glob(os.path.join(datapath, 'image_lcam_front/*.png')))
-    images_right = sorted(glob.glob(os.path.join(datapath, 'image_rcam_front/*.png')))
+    images_left = sorted(glob.glob(os.path.join(datapath, 'data_rect/*.png')))[:NUM_IMAGES]
+    # images_right = sorted(glob.glob(os.path.join(datapath, 'image_rcam_front/*.png')))
+    images_right = None
 
     print("Datapath: ", datapath)
     data = []
@@ -43,7 +47,7 @@ def image_stream(datapath, image_size=[384, 512], intrinsics_vec=[320.0, 320.0, 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--datapath", default="datasets/TartanAir")
+    parser.add_argument("--datapath", default="datasets/Kitti360")
     parser.add_argument("--weights", default="droid.pth")
     parser.add_argument("--buffer", type=int, default=1000)
     parser.add_argument("--image_size", default=[384,512])
@@ -68,7 +72,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     torch.multiprocessing.set_start_method('spawn')
 
-    from data_readers.tartan import test_split
+    from data_readers.kitti360 import test_split
     from evaluation.tartanair_evaluator import TartanAirEvaluator
 
     if not os.path.isdir("figures"):
@@ -92,25 +96,43 @@ if __name__ == '__main__':
         # fill in non-keyframe poses + global BA
         traj_est = droid.terminate(image_stream(scenedir))
 
+        # save the trajectory
+        np.savetxt('droid_traj_kitti360.txt', traj_est)
+
         ### do evaluation ###
         evaluator = TartanAirEvaluator()
-        gt_file = os.path.join(scenedir, "pose_lcam_left.txt")
-        traj_ref = np.loadtxt(gt_file, delimiter=' ')[:, [1, 2, 0, 4, 5, 3, 6]] # ned -> xyz
+        gt_file = os.path.join('data',scenedir.split('/')[-2], "cam0_to_world.txt")
+        # traj_ref = np.loadtxt(gt_file, delimiter=' ')[:, [1, 2, 0, 4, 5, 3, 6]] # ned -> xyz
+        gt_file_data = np.loadtxt(gt_file)
+        gt_idxs = gt_file_data[:,0].astype(int)
+        traj_ref = gt_file_data[gt_file_data[:,0].astype(int) < NUM_IMAGES][:,1:]
+        
+        # linear interpolation to match the timestamps
+        li_traj_ref = []
+        for i in range(1,NUM_IMAGES+1):
+            if i in gt_idxs:
+                li_traj_ref.append(gt_file_data[gt_file_data[:,0].astype(int) == i][:,1:].flatten())
+            else:
+                li_traj_ref.append(li_traj_ref[-1])
+        traj_ref = np.array(li_traj_ref)
+        traj_ref = traj_ref.reshape(-1,4,4) 
+        xyz = traj_ref[:,:3,3]
+        quat = Rotation.from_matrix(traj_ref[:,:3,:3]).as_quat()
+        traj_ref = np.concatenate([xyz, quat], axis=1)
 
         # usually stereo should not be scale corrected, but we are comparing monocular and stereo here
         results = evaluator.evaluate_one_trajectory(
             traj_ref, traj_est, scale=True, title=scenedir[-20:].replace('/', '_'))
         
-        print(results)
         ate_list.append(results["ate_score"])
         all_results[scene] = results
 
         # append the result to the result.json file
-        with open('tartanair_result.json', 'w') as f:
+        with open('kitti360_result.json', 'w') as f:
             json.dump(all_results, f)
 
     print("Results")
-    print(ate_list)
+    print("ATE: ", ate_list)
 
     if args.plot_curve:
         import matplotlib.pyplot as plt
@@ -121,5 +143,6 @@ if __name__ == '__main__':
         plt.plot(xs, ys)
         plt.xlabel("ATE [m]")
         plt.ylabel("% runs")
-        plt.show()
+        # plt.show()
+        plt.savefig("figures/ate_curve_kitti360.png")
 

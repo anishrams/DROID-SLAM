@@ -7,6 +7,7 @@ from collections import OrderedDict
 from factor_graph import FactorGraph
 from droid_net import DroidNet
 import geom.projective_ops as pops
+import numpy as np
 
 
 class PoseTrajectoryFiller:
@@ -99,6 +100,5 @@ class PoseTrajectoryFiller:
         if len(tstamps) > 0:
             pose_list += self.__fill(tstamps, images, intrinsics)
 
-        # stitch pose segments together
         return lietorch.cat(pose_list, 0)
 

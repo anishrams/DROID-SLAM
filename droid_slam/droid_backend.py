@@ -15,7 +15,10 @@ class DroidBackend:
         self.t0 = 0
         self.t1 = 0
 
-        self.upsample = args.upsample
+        try:
+            self.upsample = args.upsample
+        except:
+            self.upsample = False
         self.beta = args.beta
         self.backend_thresh = args.backend_thresh
         self.backend_radius = args.backend_radius

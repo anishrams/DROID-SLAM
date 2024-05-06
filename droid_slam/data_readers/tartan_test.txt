@@ -1,3 +1,6 @@
+AbandonedFactory/Data_easy/P000
+AbandonedFactory/Data_easy/P001
+AbandonedFactory/Data_easy/P002
 abandonedfactory/abandonedfactory/Easy/P011
 abandonedfactory/abandonedfactory/Hard/P011
 abandonedfactory_night/abandonedfactory_night/Easy/P013

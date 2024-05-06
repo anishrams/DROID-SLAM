@@ -107,6 +107,7 @@ def droid_visualization(video, device="cuda:0"):
             masks = ((count >= 2) & (disps > .5*disps.mean(dim=[1,2], keepdim=True)))
             
             for i in range(len(dirty_index)):
+                print("frame: {} filter: {:.3f}".format(t, droid_visualization.filter_thresh))
                 pose = Ps[i]
                 ix = dirty_index[i].item()
 
@@ -137,6 +138,8 @@ def droid_visualization(video, device="cuda:0"):
             if len(droid_visualization.cameras) >= droid_visualization.warmup:
                 cam = vis.get_view_control().convert_from_pinhole_camera_parameters(cam)
 
+            print("frame: {} filter: {:.3f}".format(t, droid_visualization.filter_thresh))
+
             droid_visualization.ix += 1
             vis.poll_events()
             vis.update_renderer()
@@ -147,8 +150,8 @@ def droid_visualization(video, device="cuda:0"):
     vis.register_key_callback(ord("S"), increase_filter)
     vis.register_key_callback(ord("A"), decrease_filter)
 
-    vis.create_window(height=540, width=960)
-    vis.get_render_option().load_from_json("misc/renderoption.json")
+    # vis.create_window(height=540, width=960)
+    # vis.get_render_option().load_from_json("misc/renderoption.json")
 
-    vis.run()
-    vis.destroy_window()
+    # vis.run()
+    # vis.destroy_window()
