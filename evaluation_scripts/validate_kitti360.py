@@ -17,7 +17,7 @@ import json
 from droid import Droid
 from scipy.spatial.transform import Rotation
 
-NUM_IMAGES = 1000
+NUM_IMAGES = 2000
 
 def image_stream(datapath, image_size=[384, 512], intrinsics_vec=[320.0, 320.0, 320.0, 240.0], stereo=False):
     """ image generator """
@@ -96,9 +96,6 @@ if __name__ == '__main__':
         # fill in non-keyframe poses + global BA
         traj_est = droid.terminate(image_stream(scenedir))
 
-        # save the trajectory
-        np.savetxt('droid_traj_kitti360.txt', traj_est)
-
         ### do evaluation ###
         evaluator = TartanAirEvaluator()
         gt_file = os.path.join('data',scenedir.split('/')[-2], "cam0_to_world.txt")
@@ -130,6 +127,13 @@ if __name__ == '__main__':
         # append the result to the result.json file
         with open('kitti360_result.json', 'w') as f:
             json.dump(all_results, f)
+
+        traj_results = {
+            "est": traj_est.tolist(),
+            "ref": traj_ref.tolist(),
+        }
+        with open('trajectories/kitti360/{}.json'.format(scene.replace('/', '_')), 'w') as f:
+            json.dump(traj_results, f)
 
     print("Results")
     print("ATE: ", ate_list)

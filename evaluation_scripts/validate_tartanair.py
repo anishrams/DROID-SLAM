@@ -109,6 +109,13 @@ if __name__ == '__main__':
         with open('tartanair_result.json', 'w') as f:
             json.dump(all_results, f)
 
+        traj_results = {
+            "est": traj_est.tolist(),
+            "ref": traj_ref.tolist(),
+        }
+        with open('trajectories/tartanair/{}.json'.format(scene.replace('/', '_')), 'w') as f:
+            json.dump(traj_results, f)
+
     print("Results")
     print(ate_list)
 
